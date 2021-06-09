@@ -14,6 +14,7 @@
 
 import os
 import re
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional, Union
 
@@ -103,6 +104,15 @@ class CheckpointConnector:
 
         # wait for all to catch up
         self.trainer.training_type_plugin.barrier("CheckpointConnector.resume_end")
+
+    # TODO: decice if we should use it or not (e.g., in Trainer.fit over self._run())
+    @contextmanager
+    def restore_ctx(self):
+        try:
+            self.resume_start()
+            yield
+        finally:
+            self.resume_end()
 
     def restore(self, checkpoint_path: Optional[Union[Path, str]] = None) -> None:
         """

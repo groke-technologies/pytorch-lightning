@@ -455,6 +455,7 @@ class Trainer(
 
         self.checkpoint_connector.resume_start()
 
+        # with self.checkpoint_connector.restore_ctx():
         self._run(model)
 
         assert self.state.stopped
