@@ -178,7 +178,7 @@ Mixed precision (16-bit) training
 
 Mixed precision combines the use of both 32 and 16 bit floating points to reduce memory footprint during model training, resulting in improved performance, achieving +3X speedups on modern GPUs.
 
-Lightning offers mixed precision or 16-bit training for CPUs, GPUs, and TPUs. 
+Lightning offers mixed precision or 16-bit training for CPUs, GPUs, and TPUs.
 
 
 .. testcode::
@@ -217,7 +217,7 @@ If running iteration based training, i.e. infitine / iterable dataloader, you ca
 You can also interupt training based on training time:
 
 .. testcode::
-    
+
     # Stop after 12 hours of training or when reaching 10 epochs (string)
     trainer = Trainer(max_time="00:12:00:00", max_epochs=10)
 
