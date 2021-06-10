@@ -146,14 +146,6 @@ class TrainingTypePlugin(Plugin, ABC):
         return self._results
 
     @property
-    def plugin_restores_model(self) -> bool:
-        return False
-
-    @property
-    def plugin_restores_optimizers(self) -> bool:
-        return False
-
-    @property
     def rpc_enabled(self) -> bool:
         return False
 
@@ -162,6 +154,11 @@ class TrainingTypePlugin(Plugin, ABC):
 
     def load_model_state_dict(self, checkpoint: Mapping[str, Any]) -> None:
         self.lightning_module.load_state_dict(checkpoint["state_dict"])
+
+    def load_optimizer_state_dict(self, checkpoint: Mapping[str, Any]) -> None:
+        optimizer_states = checkpoint["optimizer_states"]
+        for optimizer, opt_state in zip(self.lightning_module.trainer.accelerator.optimizers, optimizer_states):
+            optimizer.load_state_dict(opt_state)
 
     def start_training(self, trainer: 'pl.Trainer') -> None:
         # double dispatch to initiate the training loop

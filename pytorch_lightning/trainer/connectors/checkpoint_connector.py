@@ -244,7 +244,7 @@ class CheckpointConnector:
 
     def restore_optimizers_and_schedulers(self) -> None:
         """ Restores the optimizers and learning rate scheduler states from the pre-loaded checkpoint. """
-        if self.trainer.training_type_plugin.plugin_restores_optimizers or not self._loaded_checkpoint:
+        if not self._loaded_checkpoint:
             return
 
         # validation
@@ -258,14 +258,12 @@ class CheckpointConnector:
 
     def restore_optimizers(self) -> None:
         """ Restores the optimizer states from the pre-loaded checkpoint. """
-        if self.trainer.training_type_plugin.plugin_restores_optimizers or not self._loaded_checkpoint:
+        if not self._loaded_checkpoint:
             return
 
         # restore the optimizers
-        optimizer_states = self._loaded_checkpoint['optimizer_states']
-        for optimizer, opt_state in zip(self.trainer.optimizers, optimizer_states):
-            optimizer.load_state_dict(opt_state)
-
+        self.trainer.training_type_plugin.load_optimizer_state_dict(self._loaded_checkpoint)
+        for optimizer in self.trainer.optimizers:
             # move optimizer to GPU 1 weight at a time
             # avoids OOM
             if self.trainer.root_gpu is not None:
@@ -276,7 +274,7 @@ class CheckpointConnector:
 
     def restore_lr_schedulers(self) -> None:
         """ Restores the learning rate scheduler states from the pre-loaded checkpoint. """
-        if self.trainer.training_type_plugin.plugin_restores_optimizers or not self._loaded_checkpoint:
+        if not self._loaded_checkpoint:
             return
 
         # restore the lr schedulers

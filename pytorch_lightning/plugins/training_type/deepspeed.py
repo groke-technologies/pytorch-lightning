@@ -234,11 +234,6 @@ class DeepSpeedPlugin(DDPPlugin):
         self.hysteresis = hysteresis
         self.min_loss_scale = min_loss_scale
 
-
-    @property
-    def plugin_restores_optimizers(self) -> bool:
-        return self.plugin_restores_model
-
     def _load_config(self, config):
         if config is None and self.DEEPSPEED_ENV_VAR in os.environ:
             rank_zero_info(f"Loading DeepSpeed config from set {self.DEEPSPEED_ENV_VAR} environment variable")
@@ -255,10 +250,6 @@ class DeepSpeedPlugin(DDPPlugin):
     def pre_dispatch(self) -> None:
         self.init_deepspeed()
         self.barrier()
-
-        # ckpt_path = self.lightning_module.trainer.checkpoint_connector.resume_checkpoint_path
-        # if self.plugin_restores_model and ckpt_path is not None:
-        #     self.restore_model_state_from_ckpt_path(ckpt_path)
 
     def init_deepspeed(self):
         if not self._config_initialized:
@@ -556,6 +547,10 @@ class DeepSpeedPlugin(DDPPlugin):
 
     def load_model_state_dict(self, checkpoint: Mapping[str, Any]) -> None:
         # override to do nothing, deepspeed engine already loaded the weights in `load_checkpoint_file()`
+        pass
+
+    def load_optimizer_state_dict(self, checkpoint: Mapping[str, Any]) -> None:
+        # override to do nothing, deepspeed engine already loaded the states in `load_checkpoint_file()`
         pass
 
     def update_global_step(self, total_batch_idx: int, current_global_step: int) -> int:
