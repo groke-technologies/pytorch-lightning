@@ -30,7 +30,6 @@ from pytorch_lightning.utilities import (
     rank_zero_warn,
 )
 from pytorch_lightning.utilities.cloud_io import atomic_save, get_filesystem
-from pytorch_lightning.utilities.cloud_io import load as pl_load
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.upgrade_checkpoint import KEYS_MAPPING as DEPRECATED_CHECKPOINT_KEYS
 
@@ -90,7 +89,7 @@ class CheckpointConnector:
             raise FileNotFoundError(f"Checkpoint at {checkpoint_path} not found. Aborting training.")
 
         rank_zero_info(f"Restoring states from the checkpoint file at {checkpoint_path}")
-        self._loaded_checkpoint = pl_load(checkpoint_path, map_location=(lambda storage, loc: storage))
+        self._loaded_checkpoint = self.trainer.training_type_plugin.load_checkpoint_file(checkpoint_path)
 
     def resume_end(self) -> None:
         """ Signal the connector that all states have resumed and memory for the checkpoint object can be released. """
@@ -153,7 +152,7 @@ class CheckpointConnector:
         Restores a model's state from a PyTorch Lightning checkpoint. Hooks are called first, the weights get
         restored last.
         """
-        if self.trainer.training_type_plugin.plugin_restores_model or not self._loaded_checkpoint:
+        if not self._loaded_checkpoint:
             return
 
         model = self.trainer.lightning_module
@@ -166,7 +165,7 @@ class CheckpointConnector:
             self.trainer.lightning_module.on_hpc_load(self._loaded_checkpoint)
 
         # restore model state_dict
-        model.load_state_dict(self._loaded_checkpoint["state_dict"])
+        self.trainer.training_type_plugin.load_model_state_dict(self._loaded_checkpoint)
 
         # FIXME: this does not belong here
         on_gpu = self.trainer._device_type == DeviceType.GPU
@@ -177,11 +176,11 @@ class CheckpointConnector:
         """ Restore only the model weights. """
         checkpoint = self._loaded_checkpoint
         if checkpoint_path is not None:
-            checkpoint = pl_load(checkpoint_path, map_location=(lambda storage, loc: storage))
+            checkpoint = self.trainer.training_type_plugin.load_checkpoint_file(checkpoint_path)
 
         model = self.trainer.lightning_module
         model.on_load_checkpoint(checkpoint)
-        model.load_state_dict(checkpoint["state_dict"])
+        self.trainer.training_type_plugin.load_model_state_dict(self._loaded_checkpoint)
 
     def restore_training_state(self) -> None:
         """

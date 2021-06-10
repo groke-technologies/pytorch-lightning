@@ -13,7 +13,8 @@
 # limitations under the License.
 import contextlib
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Generator, Iterable, Optional, TypeVar, Union
+from pathlib import Path
+from typing import Any, Callable, Dict, Generator, Iterable, Optional, TypeVar, Union, Mapping
 
 import torch
 from torch import Tensor
@@ -27,6 +28,7 @@ from pytorch_lightning.plugins.base_plugin import Plugin
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.cloud_io import atomic_save
 from pytorch_lightning.utilities.types import _EVALUATE_OUTPUT, _PREDICT_OUTPUT
+from pytorch_lightning.utilities.cloud_io import load as pl_load
 
 TBroadcast = TypeVar("T")
 
@@ -154,6 +156,12 @@ class TrainingTypePlugin(Plugin, ABC):
     @property
     def rpc_enabled(self) -> bool:
         return False
+
+    def load_model_state_dict(self, checkpoint: Mapping[str, Any]) -> None:
+        self.lightning_module.load_state_dict(checkpoint["state_dict"])
+
+    def load_checkpoint_file(self, checkpoint_path: Union[str, Path]) -> Dict[str, Any]:
+        return pl_load(checkpoint_path, map_location=(lambda storage, loc: storage))
 
     def start_training(self, trainer: 'pl.Trainer') -> None:
         # double dispatch to initiate the training loop
