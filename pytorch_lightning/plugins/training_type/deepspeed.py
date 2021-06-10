@@ -18,7 +18,7 @@ import os
 from collections import OrderedDict
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union, Mapping
 
 import torch
 
@@ -535,6 +535,9 @@ class DeepSpeedPlugin(DDPPlugin):
 
     def load_checkpoint_file(self, checkpoint_path: Union[str, Path]) -> Dict[str, Any]:
         if self.save_full_weights or self.world_size == 1:
+            # Broadcast to ensure we load from the rank 0 checkpoint
+            # This doesn't have to be the case when using deepspeed sharded checkpointing
+            checkpoint_path = self.broadcast(checkpoint_path)
             return super().load_checkpoint_file(checkpoint_path)
 
         # Rely on deepspeed to load the checkpoint and necessary information
@@ -550,6 +553,10 @@ class DeepSpeedPlugin(DDPPlugin):
             save_dir, load_optimizer_states=is_fitting, load_lr_scheduler_states=is_fitting
         )
         return client_state
+
+    def load_model_state_dict(self, checkpoint: Mapping[str, Any]) -> None:
+        # override to do nothing, deepspeed engine already loaded the weights in `load_checkpoint_file()`
+        pass
 
     def update_global_step(self, total_batch_idx: int, current_global_step: int) -> int:
         if self._original_accumulate_grad_batches is None:
