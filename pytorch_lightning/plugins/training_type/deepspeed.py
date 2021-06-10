@@ -18,7 +18,7 @@ import os
 from collections import OrderedDict
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union, Mapping
+from typing import Any, Callable, Dict, Generator, List, Mapping, Optional, Tuple, Union
 
 import torch
 
@@ -233,7 +233,6 @@ class DeepSpeedPlugin(DDPPlugin):
         self.loss_scale_window = loss_scale_window
         self.hysteresis = hysteresis
         self.min_loss_scale = min_loss_scale
-
 
     @property
     def plugin_restores_optimizers(self) -> bool:
