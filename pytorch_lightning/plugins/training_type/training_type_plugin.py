@@ -157,11 +157,11 @@ class TrainingTypePlugin(Plugin, ABC):
     def rpc_enabled(self) -> bool:
         return False
 
-    def load_model_state_dict(self, checkpoint: Mapping[str, Any]) -> None:
-        self.lightning_module.load_state_dict(checkpoint["state_dict"])
-
     def load_checkpoint_file(self, checkpoint_path: Union[str, Path]) -> Dict[str, Any]:
         return pl_load(checkpoint_path, map_location=(lambda storage, loc: storage))
+
+    def load_model_state_dict(self, checkpoint: Mapping[str, Any]) -> None:
+        self.lightning_module.load_state_dict(checkpoint["state_dict"])
 
     def start_training(self, trainer: 'pl.Trainer') -> None:
         # double dispatch to initiate the training loop
