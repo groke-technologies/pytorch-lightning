@@ -42,11 +42,7 @@ def test_preloaded_checkpoint_lifecycle(tmpdir):
     assert not connector._loaded_checkpoint
 
     ckpt_path = trainer.checkpoint_callback.best_model_path
-    trainer = Trainer(
-        default_root_dir=tmpdir,
-        max_steps=2,
-        resume_from_checkpoint=ckpt_path
-    )
+    trainer = Trainer(default_root_dir=tmpdir, max_steps=2, resume_from_checkpoint=ckpt_path)
     connector = trainer.checkpoint_connector
     connector.resume_start()
     assert connector.resume_checkpoint_path == ckpt_path
@@ -86,11 +82,7 @@ def test_hpc_restore_attempt(tmpdir):
         torch.nn.init.constant_(param, 0)
 
     # case 2: explicit resume path provided, restore hpc anyway
-    trainer = Trainer(
-        default_root_dir=tmpdir,
-        max_steps=2,
-        resume_from_checkpoint="not existing"
-    )
+    trainer = Trainer(default_root_dir=tmpdir, max_steps=2, resume_from_checkpoint="not existing")
     trainer.fit(model)
 
     for param in model.parameters():
